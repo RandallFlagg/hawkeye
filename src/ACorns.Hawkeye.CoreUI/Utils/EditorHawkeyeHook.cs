@@ -11,7 +11,7 @@ namespace ACorns.Hawkeye.Core.Utils
 		{
 			base.OnInstallHook(data);
 
-			ObjectEditor.Instance.Enable();
+			ObjectEditor.Instance.EnableHotKey();
 
 			IntPtr originalHawkeyeWindow = (IntPtr)BitConverter.ToInt32(data, 0);
 			IntPtr spyWindow = (IntPtr)BitConverter.ToInt32(data, 4);

@@ -74,16 +74,15 @@ namespace ACorns.Hawkeye.Tabs.Events
 
 		#region ICustomMenuHandler Members
 
-		public void RegisterMenuItems(System.Windows.Forms.ContextMenu contextMenu)
+		public void RegisterMenuItems(System.Windows.Forms.ContextMenuStrip contextMenu)
 		{
 			invokeMenuItem = new CustomMenuItem(this, "Invoke", new EventHandler(OnInvokeEvent));
 			clearAllListenersForThisObject = new CustomMenuItem(this, "Remove Hawkeye's listeners for this object", new EventHandler(ClearListenersForThisObject));
 			clearAllListeners = new CustomMenuItem(this, "Remove ALL Hawkeye's Listeners", new EventHandler(ClearListeners));
 
-			contextMenu.MenuItems.Add(1, invokeMenuItem);
-
-			contextMenu.MenuItems.Add(clearAllListenersForThisObject);
-			contextMenu.MenuItems.Add(clearAllListeners);
+			contextMenu.Items.Insert(1, invokeMenuItem);
+            contextMenu.Items.Add(clearAllListenersForThisObject);
+            contextMenu.Items.Add(clearAllListeners);
 
 			invokeMenuItem.Enabled = false;
 			clearAllListenersForThisObject.Enabled = true;

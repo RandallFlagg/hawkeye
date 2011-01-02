@@ -26,6 +26,6 @@ namespace ACorns.Hawkeye.Tabs
 	/// </summary>
 	internal interface ICustomMenuHandler
 	{
-		void RegisterMenuItems(ContextMenu contextMenu);
+		void RegisterMenuItems(ContextMenuStrip contextMenu);
 	}
 }

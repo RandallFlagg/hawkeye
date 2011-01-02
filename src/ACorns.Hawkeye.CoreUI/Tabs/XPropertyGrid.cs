@@ -1,144 +1,116 @@
-/* ****************************************************************************
- *  Hawkeye - The .Net Runtime Object Editor
- * 
- * Copyright (c) 2005 Corneliu I. Tusnea
- * 
- * This software is provided 'as-is', without any express or implied warranty.
- * In no event will the author be held liable for any damages arising from 
- * the use of this software.
- * Permission to use, copy, modify, distribute and sell this software for any 
- * purpose is hereby granted without fee, provided that the above copyright 
- * notice appear in all copies and that both that copyright notice and this 
- * permission notice appear in supporting documentation.
- * 
- * Corneliu I. Tusnea (corneliutusnea@yahoo.com.au)
- * http://www.acorns.com.au/hawkeye/
- * ****************************************************************************/
-
-
 using System;
-using System.Collections;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
-using ACorns.Hawkeye.Options;
-using ACorns.Hawkeye.Tabs.Events;
-using ACorns.Hawkeye.Tabs.Fields;
-using ACorns.Hawkeye.Tabs.Methods;
-using ACorns.Hawkeye.Tabs.ProcessInfo;
-using ACorns.Hawkeye.Tabs.Properties;
-using ACorns.Hawkeye.Tabs.Toolbar;
-using ACorns.Hawkeye.Tools.Reflector;
+using System.ComponentModel;
+using System.Collections.Generic;
+
 using ACorns.Hawkeye.Utils;
 using ACorns.Hawkeye.Utils.Menus;
 using ACorns.Hawkeye.Core.Utils.Accessors;
+using ACorns.Hawkeye.Options;
+using ACorns.Hawkeye.Tabs.Fields;
+using ACorns.Hawkeye.Tabs.Events;
+using ACorns.Hawkeye.Tabs.Methods;
+using ACorns.Hawkeye.Tabs.Properties;
+using ACorns.Hawkeye.Tabs.ProcessInfo;
+using ACorns.Hawkeye.Tabs.Toolbar;
+using ACorns.Hawkeye.Tools.Reflector;
+
+
 
 namespace ACorns.Hawkeye.Tabs
 {
-    internal delegate void SelectedObjectRequestHandler(object newObject);
-
-    internal class XPropertyGrid : PropertyGrid
+    internal partial class XPropertyGrid : PropertyGrid
     {
-        public event SelectedObjectRequestHandler SelectRequest;
-        public event EventHandler AddToolbarButtons;
+        #region Private memnbers
 
-        #region Context Menu
-        private ContextMenu contextMenu;
-        private MenuItem selectThisItem;
-        private MenuItem showSourceCodeForItem;
-        private MenuItem goBackOneItem;
-        private MenuItem goForwardOneItem;
-        #endregion
+        private const int maxHistoryDepth = 10; // remember the 10 last selections.
 
-        private ArrayList historyObjects = new ArrayList();
-        private int activeObject = -1;
-
-        private ToolBar externalToolBar;
-        private ToolBar gridToolBar;
-
+        private int activeObjectCount = -1;
+        private List<object> historyObjects = new List<object>();
         private FieldAccesor gridViewAccessor;
         private FieldAccesor peMainAccessor;
         private MethodAccesor recursivelyExpandAccessor;
 
+        private ContextMenuStrip contextMenu;
+        private ToolStripMenuItem selectThisItem;
+        private ToolStripMenuItem showSourceCodeForItem;
+        private ToolStripMenuItem goBackOneItem;
+        private ToolStripMenuItem goForwardOneItem;
+        private ToolStripMenuItem goParentItem;
+
+        private ToolBar externalToolBar;
+        private ToolBar gridToolBar;
+
         private ToolBarButton btnRefresh;
+        private ToolBarButton btnBack;
+        private ToolBarButton btnForward;
+        private ToolBarButton btnParent;
         private ToolBarButton btnCollapseAll;
         private ToolBarButton btnExpandAll;
         private ToolBarButton btnShowSourceCode;
-
         private ToolBarButton btnAddExtender;
-
         private ToolBarButton btnHighlightWindow;
+
         private WindowProperties highlightWindowProperties = new WindowProperties();
 
+        #endregion
+
+        #region Construction
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="XPropertyGrid"/> class.
+        /// </summary>
         public XPropertyGrid()
         {
             InitializeComponent();
         }
 
-        #region Component Designer generated code
-
         /// <summary>
-        /// Required designer variable.
+        /// Initializes a new instance of the <see cref="XPropertyGrid"/> class.
         /// </summary>
-        private System.ComponentModel.Container components = null;
-
-        /// <summary> 
-        /// Clean up any resources being used.
-        /// </summary>
-        protected override void Dispose(bool disposing)
+        /// <param name="container">The container.</param>
+        public XPropertyGrid(IContainer container)
         {
-            if (disposing)
-            {
-                if (components != null)
-                {
-                    components.Dispose();
-                }
-            }
-            base.Dispose(disposing);
-        }
-
-        /// <summary> 
-        /// Required method for Designer support - do not modify 
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
-        {
-            this.components = new System.ComponentModel.Container();
-            this.SuspendLayout();
-            this.ResumeLayout(false);
-            this.SelectedObjectsChanged += new EventHandler(XPropertyGrid_SelectedObjectsChanged);
-            this.PropertyTabChanged += new PropertyTabChangedEventHandler(XPropertyGrid_PropertyTabChanged);
+            container.Add(this);
+            InitializeComponent();
         }
 
         #endregion
 
-        #region Context Menu
-        private void InitContextMenu()
-        {
-            contextMenu = new ContextMenu();
-            goBackOneItem = new MenuItem("Back");
-            goForwardOneItem = new MenuItem("Forward");
-            selectThisItem = new MenuItem("Select");
-            showSourceCodeForItem = new MenuItem("Show source code");
+        #region Events definition
 
-            selectThisItem.Click += new EventHandler(selectThisItem_Click);
-            showSourceCodeForItem.Click += new EventHandler(showSourceCodeForItem_Click);
-            goBackOneItem.Click += new EventHandler(goBackOneItem_Click);
-            goForwardOneItem.Click += new EventHandler(goForwardOneItem_Click);
+        public event SelectedObjectRequestHandler SelectRequest;
+        public event EventHandler AddToolbarButtons;
 
-            contextMenu.MenuItems.AddRange(new MenuItem[] { selectThisItem, showSourceCodeForItem, new MenuItem("-"), goBackOneItem, goForwardOneItem });
-
-            this.ContextMenu = contextMenu;
-        }
         #endregion
 
         #region Properties
 
+        public ToolBar ExternalToolBar
+        {
+            get { return externalToolBar; }
+            set { externalToolBar = value; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the commands pane can be made visible for the currently selected objects.
+        /// </summary>
+        /// <value></value>
+        /// <returns>true if the commands pane can be made visible; otherwise, false.
+        /// </returns>
         public override bool CanShowCommands
         {
             get { return true; }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the commands pane is visible for objects that expose verbs.
+        /// </summary>
+        /// <value></value>
+        /// <returns>true if the commands pane is visible; otherwise, false. The default is true.
+        /// </returns>
         public override bool CommandsVisibleIfAvailable
         {
             get { return true; }
@@ -147,156 +119,95 @@ namespace ACorns.Hawkeye.Tabs
 
         #endregion
 
-        #region OnCreateControl
-        protected override void OnCreateControl()
+        #region Public API
+
+        public ToolBarButton AddToolbarButton(int index, string text, string imageName, EventHandler eventHandler)
         {
-            DrawFlatToolbar = true;
-            HelpVisible = true;
-
-            PropertySort = PropertySort.Alphabetical;
-
-            InitContextMenu();
-
-            goBackOneItem.Enabled = false;
-            goForwardOneItem.Enabled = false;
-
-            base.OnCreateControl();
-
-            // Add New Tabs here
-            base.PropertyTabs.AddTabType(typeof(AllPropertiesTab));
-            base.PropertyTabs.AddTabType(typeof(AllFieldsTab));
-            base.PropertyTabs.AddTabType(typeof(InstanceEventsTab));
-            base.PropertyTabs.AddTabType(typeof(MethodsTab));
-            base.PropertyTabs.AddTabType(typeof(ProcessInfoTab));
-
-            historyObjects.Clear();
-
-            InitCustomToolbar();
-
-            InitCustomContextMenus();
-
-            Type type = typeof(PropertyGrid);
-            if (ApplicationOptions.Instance.HasDynamicExtenders(type))
-            {
-                DynamicExtenderInfo extender = ApplicationOptions.Instance.GetDynamicExtender(type);
-                if (extender != null) extender.CreateExtender(this);
-                // TODO: log if extender == null
-            }
+            return ToolbarUtils.AddButton(index, gridToolBar, text, imageName, eventHandler);
         }
+
         #endregion
 
-        #region Navigation
+        #region Initializations & UI refresh
 
-        protected override void OnSelectedObjectsChanged(EventArgs e)
-        { // put in history
-            if (SelectedObject != null)
+        private void InitContextMenu()
+        {
+            // TODO: switch to a regular ToolStrip, then use png/32bits images so that 
+            // transparency has not to be fixed this way.
+            Bitmap leftImage = new Bitmap(ACorns.Hawkeye.Properties.Resources.LeftArrow);
+            leftImage.MakeTransparent(Color.Silver);
+            Bitmap rightImage = new Bitmap(ACorns.Hawkeye.Properties.Resources.RightArrow);
+            rightImage.MakeTransparent(Color.Silver);
+            Bitmap upImage = new Bitmap(ACorns.Hawkeye.Properties.Resources.UpArrow);
+            upImage.MakeTransparent(Color.Silver);
+            Bitmap reflectorImage = new Bitmap(ACorns.Hawkeye.Properties.Resources.Reflector);
+            reflectorImage.MakeTransparent(Color.Silver);
+
+            goBackOneItem = new ToolStripMenuItem("Back", leftImage);
+            goForwardOneItem = new ToolStripMenuItem("Forward", rightImage);
+            goParentItem = new ToolStripMenuItem("Parent", upImage);
+            selectThisItem = new ToolStripMenuItem("Select");
+            showSourceCodeForItem = new ToolStripMenuItem("Show source code", reflectorImage);
+
+            selectThisItem.Click += new EventHandler(selectThisItem_Click);
+            showSourceCodeForItem.Click += new EventHandler(showSourceCodeForItem_Click);
+            goBackOneItem.Click += new EventHandler(goBackOneItem_Click);
+            goForwardOneItem.Click += new EventHandler(goForwardOneItem_Click);
+            goParentItem.Click += new EventHandler(goParentItem_Click);
+
+            contextMenu = new ContextMenuStrip();
+            contextMenu.Items.AddRange(new ToolStripItem[]
             {
-                if (!historyObjects.Contains(SelectedObject))
+                selectThisItem,
+                showSourceCodeForItem,
+                new ToolStripSeparator(),
+                goBackOneItem, 
+                goForwardOneItem,
+                goParentItem
+            });
+
+            ContextMenuStrip = contextMenu;
+        }
+
+        private void InitCustomContextMenus()
+        {
+            foreach (PropertyTab tab in this.PropertyTabs)
+            {
+                IPropertyGridTab handler = tab as IPropertyGridTab;
+                if (handler != null)
                 {
-                    if (activeObject < historyObjects.Count - 1)
+                    handler.PropertyGrid = this;
+                }
+            }
+
+            foreach (PropertyTab tab in this.PropertyTabs)
+            {
+                ICustomMenuHandler handler = tab as ICustomMenuHandler;
+                if (handler != null)
+                {
+                    handler.RegisterMenuItems(this.contextMenu);
+                }
+            }
+            RefreshValidContextMenus();
+        }
+
+        private void RefreshValidContextMenus()
+        {
+            foreach (ToolStripItem menuItem in this.contextMenu.Items)
+            {
+                CustomMenuItem cMenuItem = menuItem as CustomMenuItem;
+                if (cMenuItem != null)
+                {
+                    if (cMenuItem.OwnerTab != this.SelectedTab)
                     {
-                        historyObjects.RemoveRange(activeObject + 1, historyObjects.Count - activeObject - 1);
+                        cMenuItem.Visible = false;
                     }
-                    activeObject = historyObjects.Add(SelectedObject);
-                    goBackOneItem.Enabled = true;
-                    goForwardOneItem.Enabled = false;
-
-                    if (historyObjects.Count > 10)
+                    else
                     {
-                        historyObjects.RemoveRange(0, historyObjects.Count - 10);
+                        cMenuItem.Visible = true;
                     }
                 }
-                else
-                {
-                    activeObject = historyObjects.IndexOf(SelectedObject);
-                }
             }
-            base.OnSelectedObjectsChanged(e);
-        }
-
-        private void selectThisItem_Click(object sender, EventArgs e)
-        {
-            GridItem selectedGridItem = this.SelectedGridItem;
-
-            if (selectedGridItem != null)
-            {
-                object value = selectedGridItem.Value;
-                IRealValueHolder valueHolder = value as IRealValueHolder;
-                if (valueHolder != null)
-                {
-                    value = valueHolder.RealValue;
-                }
-                InvokeSelectRequest(value);
-            }
-        }
-
-        private void goBackOneItem_Click(object sender, EventArgs e)
-        {
-            if (activeObject > 0)
-            {
-                activeObject--;
-                goForwardOneItem.Enabled = true;
-            }
-            else
-            {
-                goBackOneItem.Enabled = false;
-            }
-            InvokeSelectRequest();
-        }
-
-        private void goForwardOneItem_Click(object sender, EventArgs e)
-        {
-            if (activeObject < historyObjects.Count)
-            {
-                activeObject++;
-                goBackOneItem.Enabled = true;
-            }
-            else
-            {
-                goForwardOneItem.Enabled = false;
-            }
-            InvokeSelectRequest();
-        }
-
-        private object GetActiveObject()
-        {
-            if (activeObject >= 0 && activeObject < historyObjects.Count)
-            {
-                return historyObjects[activeObject];
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        #endregion
-
-        #region Invoke
-
-        private void InvokeSelectRequest()
-        {
-            if (SelectRequest != null)
-            {
-                SelectRequest(GetActiveObject());
-            }
-        }
-
-        private void InvokeSelectRequest(object newOBject)
-        {
-            if (SelectRequest != null)
-            {
-                SelectRequest(newOBject);
-            }
-        }
-
-        #endregion
-
-        #region Tool Bar Buttons
-        public ToolBar ExternalToolBar
-        {
-            get { return externalToolBar; }
-            set { externalToolBar = value; }
         }
 
         private void InitCustomToolbar()
@@ -360,6 +271,11 @@ namespace ACorns.Hawkeye.Tabs
             }
 
             btnRefresh = ToolbarUtils.AddButton(gridToolBar, "Refresh", "Refresh.bmp", new EventHandler(btnRefresh_Click));
+
+            btnBack = ToolbarUtils.AddButton(gridToolBar, "Back", "LeftArrow.bmp", new EventHandler(btnBack_Click));
+            btnForward = ToolbarUtils.AddButton(gridToolBar, "Forward", "RightArrow.bmp", new EventHandler(btnForward_Click));
+            btnParent = ToolbarUtils.AddButton(gridToolBar, "Parent", "UpArrow.bmp", new EventHandler(btnParent_Click));
+
             btnHighlightWindow = ToolbarUtils.AddButton(gridToolBar, "Highlight Window", "Highlight.bmp", new EventHandler(highlightWindow_Click));
             btnExpandAll = ToolbarUtils.AddButton(gridToolBar, "Collapse and Group by Category", "CollapseAll.bmp", new EventHandler(btnCollapseAll_Click));
             btnCollapseAll = ToolbarUtils.AddButton(gridToolBar, "Expand All", "ExpandAll.bmp", new EventHandler(btnExpandAll_Click));
@@ -367,195 +283,295 @@ namespace ACorns.Hawkeye.Tabs
             btnAddExtender = ToolbarUtils.AddButton(gridToolBar, "Add Dynamic Extender", "AddDynamicExtender.bmp", new EventHandler(addDynamicExtender_click));
 
             btnAddExtender.Enabled = false;
+            btnBack.Enabled = false;
+            btnForward.Enabled = false;
+            btnParent.Enabled = false;
 
-            if (AddToolbarButtons != null)
-            {
-                AddToolbarButtons(this, EventArgs.Empty);
-            }
+            if (AddToolbarButtons != null) AddToolbarButtons(this, EventArgs.Empty);
 
-            RefreshToolbarButtonsState();
+            RefreshToolbarButtonsAndMenusState();
         }
 
-        private void highlightWindow_Click(object sender, EventArgs e)
+        private void RefreshToolbarButtonsAndMenusState()
         {
-            if (this.SelectedObject is Control)
-            {
-                IntPtr handle = (this.SelectedObject as Control).Handle;
-                if (handle != IntPtr.Zero)
-                {
-                    highlightWindowProperties.SetWindowHandle(handle, Point.Empty);
-                }
-            }
-        }
+            object selected = SelectedObject;
+            bool enabled = selected != null;
 
-        public ToolBarButton AddToolbarButton(int index, string text, string imageName, EventHandler eventHandler)
-        {
-            return ToolbarUtils.AddButton(index, gridToolBar, text, imageName, eventHandler);
-        }
-
-        private void RefreshToolbarButtonsState()
-        {
-            bool enabled = this.SelectedObject != null;
             btnRefresh.Enabled = enabled;
             btnExpandAll.Enabled = enabled;
             btnCollapseAll.Enabled = enabled;
-            btnShowSourceCode.Enabled = enabled;
-            btnAddExtender.Enabled = false;
+            showSourceCodeForItem.Enabled = btnShowSourceCode.Enabled = enabled;
+            selectThisItem.Enabled = SelectedGridItem != null;
+            goParentItem.Enabled = btnParent.Enabled = GetParent(SelectedObject) != null;
 
-            object selected = this.SelectedObject;
-            if (selected != null)
-            {
-                if (ApplicationOptions.Instance.HasDynamicExtenders(selected.GetType()))
-                    btnAddExtender.Enabled = true;
-            }
+            btnAddExtender.Enabled = selected != null &&
+                ApplicationOptions.Instance.HasDynamicExtenders(selected.GetType());
+        }
 
-        }
-        private void externalToolBar_ButtonClick(object sender, ToolBarButtonClickEventArgs e)
-        {
-            ToolBarButton btn = e.Button;
-            if (btn != null)
-            {
-                EventHandler handler = btn.Tag as EventHandler;
-                if (handler != null)
-                {
-                    handler(externalToolBar, EventArgs.Empty);
-                }
-            }
-        }
         #endregion
 
-        #region Menu Items Handling
-        private void btnRefresh_Click(object sender, EventArgs e)
+        #region Overrides
+
+        /// <summary>
+        /// Called when the control is created.
+        /// </summary>
+        protected override void OnCreateControl()
         {
-            this.Refresh();
+            DrawFlatToolbar = true;
+            HelpVisible = true;
+
+            PropertySort = PropertySort.Alphabetical;
+
+            InitContextMenu();
+
+            goBackOneItem.Enabled = false;
+            goForwardOneItem.Enabled = false;
+            if (btnBack != null) btnBack.Enabled = false;
+            if (btnForward != null) btnForward.Enabled = false;
+
+            base.OnCreateControl();
+
+            // Add New Tabs here
+            base.PropertyTabs.AddTabType(typeof(AllPropertiesTab));
+            base.PropertyTabs.AddTabType(typeof(AllFieldsTab));
+            base.PropertyTabs.AddTabType(typeof(InstanceEventsTab));
+            base.PropertyTabs.AddTabType(typeof(MethodsTab));
+            base.PropertyTabs.AddTabType(typeof(ProcessInfoTab));
+
+            historyObjects.Clear();
+
+            InitCustomToolbar();
+
+            InitCustomContextMenus();
+
+            Type type = typeof(PropertyGrid);
+            if (ApplicationOptions.Instance.HasDynamicExtenders(type))
+            {
+                DynamicExtenderInfo extender = ApplicationOptions.Instance.GetDynamicExtender(type);
+                if (extender != null) extender.CreateExtender(this);
+                // TODO: log if extender == null
+            }
         }
-        private void btnCollapseAll_Click(object sender, EventArgs e)
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Forms.PropertyGrid.SelectedObjectsChanged"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.EventArgs"/> that contains the event data.</param>
+        protected override void OnSelectedObjectsChanged(EventArgs e)
         {
-            if (this.SelectedObject == null)
-                return;
-            this.Visible = false;
-            try
+            // put in history
+            if (SelectedObject != null)
             {
-                this.PropertySort = System.Windows.Forms.PropertySort.CategorizedAlphabetical;
-                this.CollapseAllGridItems();
+                if (!historyObjects.Contains(SelectedObject))
+                {
+                    if (activeObjectCount < historyObjects.Count - 1)
+                        historyObjects.RemoveRange(activeObjectCount + 1, historyObjects.Count - activeObjectCount - 1);
+
+                    historyObjects.Add(SelectedObject);
+                    activeObjectCount = historyObjects.Count;
+                    goBackOneItem.Enabled = btnBack.Enabled = true;
+                    goForwardOneItem.Enabled = btnForward.Enabled = false;
+
+                    int historyCount = historyObjects.Count;
+                    if (historyCount > maxHistoryDepth)
+                        historyObjects.RemoveRange(0, historyCount - maxHistoryDepth);
+                }
+                else activeObjectCount = historyObjects.IndexOf(SelectedObject);
             }
-            finally
-            {
-                this.Visible = true;
-            }
+
+            base.OnSelectedObjectsChanged(e);
+            RefreshToolbarButtonsAndMenusState();
         }
-        private void btnExpandAll_Click(object sender, EventArgs e)
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Forms.PropertyGrid.PropertyTabChanged"/> event.
+        /// </summary>
+        /// <param name="e">A <see cref="T:System.Windows.Forms.PropertyTabChangedEventArgs"/> that contains the event data.</param>
+        protected override void OnPropertyTabChanged(PropertyTabChangedEventArgs e)
         {
-            this.Visible = false;
-            try
-            {
-                ExpandAll();
-            }
-            finally
-            {
-                this.Visible = true;
-            }
+            base.OnPropertyTabChanged(e);
+            RefreshValidContextMenus();
         }
-        private void showSourceCodeForItem_Click(object sender, EventArgs e)
+
+        #endregion
+
+        #region Actions
+
+        private void SelectThisItem()
         {
             GridItem selectedGridItem = this.SelectedGridItem;
-            if (selectedGridItem != null)
-            {
-                ReflectorRouter.Instance.ShowSourceCode(selectedGridItem.PropertyDescriptor);
-            }
-        }
-        #endregion
+            if (selectedGridItem == null) return;
 
-        #region Expand
+            SelectItem(selectedGridItem.Value);
+        }
+
+        private void GoBackOneItem()
+        {
+            if (activeObjectCount > 0)
+            {
+                activeObjectCount--;
+                goForwardOneItem.Enabled = btnForward.Enabled = true;
+            }
+            else goBackOneItem.Enabled = btnBack.Enabled = false;
+
+            InvokeSelectRequest(GetActiveObject());
+        }
+
+        private void GoForwardOneItem()
+        {
+            if (activeObjectCount < historyObjects.Count)
+            {
+                activeObjectCount++;
+                goBackOneItem.Enabled = btnBack.Enabled = true;
+            }
+            else goForwardOneItem.Enabled = btnForward.Enabled = false;
+
+            InvokeSelectRequest(GetActiveObject());
+        }
+
+        private void SelectParentItem()
+        {
+            SelectItem(GetParent(SelectedObject));
+        }
+
         private void ExpandAll()
         {
-            if (this.SelectedObject == null)
-                return;
+            if (SelectedObject == null) return;
 
-            if (gridViewAccessor == null)
+            Visible = false;
+            try
             {
-                gridViewAccessor = new FieldAccesor(this, "gridView");
-                peMainAccessor = new FieldAccesor(this, "peMain");
-            }
-
-            object gridView = gridViewAccessor.Get();
-            object peMain = peMainAccessor.Get();
-            if (recursivelyExpandAccessor == null)
-            {
-                recursivelyExpandAccessor = new MethodAccesor(gridView.GetType(), "RecursivelyExpand");
-            }
-
-            recursivelyExpandAccessor.Invoke(gridView, new object[] { peMain, false, true, 2 });
-        }
-
-        #endregion
-
-        private void XPropertyGrid_SelectedObjectsChanged(object sender, EventArgs e)
-        {
-            RefreshToolbarButtonsState();
-        }
-
-        #region Context Menus
-        private void InitCustomContextMenus()
-        {
-            foreach (PropertyTab tab in this.PropertyTabs)
-            {
-                IPropertyGridTab handler = tab as IPropertyGridTab;
-                if (handler != null)
+                if (gridViewAccessor == null)
                 {
-                    handler.PropertyGrid = this;
+                    gridViewAccessor = new FieldAccesor(this, "gridView");
+                    peMainAccessor = new FieldAccesor(this, "peMain");
                 }
-            }
 
-            foreach (PropertyTab tab in this.PropertyTabs)
-            {
-                ICustomMenuHandler handler = tab as ICustomMenuHandler;
-                if (handler != null)
-                {
-                    handler.RegisterMenuItems(this.contextMenu);
-                }
+                object gridView = gridViewAccessor.Get();
+                object peMain = peMainAccessor.Get();
+                if (recursivelyExpandAccessor == null)
+                    recursivelyExpandAccessor = new MethodAccesor(gridView.GetType(), "RecursivelyExpand");
+
+                recursivelyExpandAccessor.Invoke(gridView, new object[] { peMain, false, true, 2 });
             }
-            RefreshValidContextMenus();
+            finally { Visible = true; }
         }
 
-        private void RefreshValidContextMenus()
+        private void CollapseAll()
         {
-            foreach (MenuItem menuItem in this.contextMenu.MenuItems)
+            if (SelectedObject == null) return;
+
+            Visible = false;
+            try
             {
-                CustomMenuItem cMenuItem = menuItem as CustomMenuItem;
-                if (cMenuItem != null)
-                {
-                    if (cMenuItem.OwnerTab != this.SelectedTab)
-                    {
-                        cMenuItem.Visible = false;
-                    }
-                    else
-                    {
-                        cMenuItem.Visible = true;
-                    }
-                }
+                PropertySort = PropertySort.CategorizedAlphabetical;
+                CollapseAllGridItems();
             }
+            finally { Visible = true; }
         }
 
-        private void XPropertyGrid_PropertyTabChanged(object s, PropertyTabChangedEventArgs e)
+        private void ShowSourceCode()
         {
-            RefreshValidContextMenus();
+            GridItem selectedGridItem = SelectedGridItem;
+            if (selectedGridItem != null) ReflectorRouter.Instance.ShowSourceCode(
+                selectedGridItem.PropertyDescriptor);
         }
-        #endregion
 
-        #region Dynamic Extenders
-        private void addDynamicExtender_click(object sender, EventArgs e)
+        private void HighlightWindow()
+        {
+            if (!(SelectedObject is Control)) return;
+
+            IntPtr handle = ((Control)SelectedObject).Handle;
+            if (handle != IntPtr.Zero)
+                highlightWindowProperties.SetWindowHandle(handle, Point.Empty);
+        }
+
+        private void HandleExternalToolBarButtonClick(ToolBarButton button)
+        {
+            if (button == null) return;
+            EventHandler handler = button.Tag as EventHandler;
+            if (handler != null) handler(externalToolBar, EventArgs.Empty);
+        }
+
+        //TODO: is this useful???
+        private void AddDynamicExtender()
         {
             if (SelectedObject == null) return;
 
             Type selectedObjectType = SelectedObject.GetType();
-            if (ApplicationOptions.Instance.HasDynamicExtenders(selectedObjectType))
-            {
-                DynamicExtenderInfo extender = ApplicationOptions.Instance.GetDynamicExtender(selectedObjectType);
-                if (extender != null) extender.CreateExtender(SelectedObject);
-                // TODO: log if extender == null
-            }
+            if (!ApplicationOptions.Instance.HasDynamicExtenders(selectedObjectType)) return;
+
+            DynamicExtenderInfo extender = ApplicationOptions.Instance.GetDynamicExtender(selectedObjectType);
+            if (extender != null) extender.CreateExtender(SelectedObject);
+            // TODO: log if extender == null
         }
+
+        #endregion
+
+        #region Private implementation
+
+        private object GetParent(object child)
+        {
+            if (child == null) return null;
+            if (child is Control)
+                return ((Control)child).Parent;
+            else return null;
+        }
+
+        private void SelectItem(object value)
+        {
+            if (value == null) return;
+
+            if (value is IRealValueHolder) // recursively open this.
+                SelectItem(((IRealValueHolder)value).RealValue);
+            else InvokeSelectRequest(value);
+        }
+
+        private object GetActiveObject()
+        {
+            if (activeObjectCount >= 0 && activeObjectCount < historyObjects.Count)
+                return historyObjects[activeObjectCount];
+            else return null;
+        }
+
+        private void InvokeSelectRequest(object newObject)
+        {
+            if (newObject != null && SelectRequest != null) 
+                SelectRequest(newObject);
+        }
+
+        #endregion
+
+        #region Event handlers
+
+        private void selectThisItem_Click(object sender, EventArgs e) { SelectThisItem(); }
+
+        private void goBackOneItem_Click(object sender, EventArgs e) { GoBackOneItem(); }
+
+        private void goForwardOneItem_Click(object sender, EventArgs e) { GoForwardOneItem(); }
+
+        private void goParentItem_Click(object sender, EventArgs e) { SelectParentItem(); }
+
+        private void btnRefresh_Click(object sender, EventArgs e) { Refresh(); }
+
+        private void btnBack_Click(object sender, EventArgs e) { GoBackOneItem(); }
+
+        private void btnForward_Click(object sender, EventArgs e) { GoForwardOneItem(); }
+
+        private void btnParent_Click(object sender, EventArgs e) { SelectParentItem(); }
+
+        private void btnCollapseAll_Click(object sender, EventArgs e) { CollapseAll(); }
+
+        private void btnExpandAll_Click(object sender, EventArgs e) { ExpandAll(); }
+
+        private void showSourceCodeForItem_Click(object sender, EventArgs e) { ShowSourceCode(); }
+
+        private void highlightWindow_Click(object sender, EventArgs e) { HighlightWindow(); }
+
+        private void externalToolBar_ButtonClick(object sender, ToolBarButtonClickEventArgs e) { HandleExternalToolBarButtonClick(e.Button); }
+
+        private void addDynamicExtender_click(object sender, EventArgs e) { AddDynamicExtender(); }
+
         #endregion
     }
 }

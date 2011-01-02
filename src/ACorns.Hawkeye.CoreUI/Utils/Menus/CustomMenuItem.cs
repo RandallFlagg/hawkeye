@@ -25,14 +25,15 @@ namespace ACorns.Hawkeye.Utils.Menus
 	/// <summary>
 	/// Summary description for CustomMenuItem.
 	/// </summary>
-	internal class CustomMenuItem : MenuItem
+	internal class CustomMenuItem : ToolStripMenuItem
 	{
 		private readonly PropertyTab ownerTab;
 
 		public CustomMenuItem(PropertyTab ownerTab, string text, EventHandler handler)
-			: base(text, handler)
+			: base(text)
 		{
 			this.ownerTab = ownerTab;
+            if (handler != null) base.Click += handler;
 		}
 
 		public PropertyTab OwnerTab

@@ -3,6 +3,7 @@ using System.Windows.Forms;
 
 using ACorns.Hawkeye.Core.Utils;
 using ACorns.Hawkeye.Core.Utils.CommandLine;
+using ACorns.Hawkeye.Core.Options;
 
 namespace ACorns.Hawkeye
 {
@@ -18,7 +19,7 @@ namespace ACorns.Hawkeye
             if (!TryUpdate())
             {
                 Arguments arguments = new Arguments(args);
-                string windowHandleStr = arguments["targetwndhanle"];
+                string windowHandleStr = arguments["targetwndhandle"];
                 string origWndHandleStr = arguments["origwndhandle"];
 
                 if (!(string.IsNullOrEmpty(windowHandleStr) || string.IsNullOrEmpty(origWndHandleStr)))
@@ -31,7 +32,10 @@ namespace ACorns.Hawkeye
                 {
                     HawkeyeTraceListener.StartListening();
                     Application.EnableVisualStyles();
-                    Application.Run(ObjectEditor.Instance.CreateEditor());
+
+                    Form editor = ObjectEditor.Instance.CreateEditor();
+
+                    Application.Run(editor);
                 }
             }
         }

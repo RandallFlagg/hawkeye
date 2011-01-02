@@ -31,14 +31,14 @@ namespace ACorns.Hawkeye.Core.Utils.Hotkey
 		private const int WM_HOTKEY = 0x312;
 		private int hotKeyValue = 0;
 
-		public HotKeyWatch()
-		{
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HotKeyWatch"/> class.
+        /// </summary>
+		public HotKeyWatch() { }
 
 		public bool RegisterHotKey(string hotKey)
 		{
-			if (!this.IsHandleCreated)
-				base.CreateControl();
+			if (!IsHandleCreated) base.CreateControl();
 			return Register(hotKey);
 		}
 
@@ -66,19 +66,24 @@ namespace ACorns.Hawkeye.Core.Utils.Hotkey
 				HotKeyUtils.UnregisterKey(this, hotKeyValue);
 				HotKeyUtils.GlobalDeleteAtom(hotKeyValue);
 			}
-
 		}
 
 		private bool Register(string key)
 		{
 			Unregister();
+            if (string.IsNullOrEmpty(key))
+            {
+                Trace.WriteLine("Could not register empty hotkey.");
+                return false;
+            }
 
 			int hotKeyValue = HotKeyUtils.GlobalAddAtom("RE:" + key.ToString());
 			if (hotKeyValue == 0)
 			{
-				Trace.WriteLine("Could not register atom for hotkey!");
+				Trace.WriteLine("Could not register atom for hotkey " + key);
 				return false;
 			}
+
 			return HotKeyUtils.RegisterKey(this, hotKeyValue, key);
 		}
 	}

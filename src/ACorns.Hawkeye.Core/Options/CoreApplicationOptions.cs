@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Diagnostics;
 using System.IO;
+using System.Xml;
 
 namespace ACorns.Hawkeye.Core.Options
 {
@@ -30,36 +31,55 @@ namespace ACorns.Hawkeye.Core.Options
 	{
 		#region Instance
 
-		private static CoreApplicationOptions instance = new CoreApplicationOptions();
+        private static CoreApplicationOptions instance = null;
 
 		/// <summary>
 		/// Singleton instance of the ApplicationOptions.
 		/// </summary>
 		public static CoreApplicationOptions Instance
 		{
-			get { return instance; }
+			get 
+            {
+                if (instance == null)
+                {
+                    instance = new CoreApplicationOptions();
+
+                    try
+                    {
+                        instance.ReadSettings();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.Write(string.Format("Could not read application settings: {0}", ex));
+                    }
+                }
+
+                return instance; 
+            }
 		}
 
 		#endregion
 
-		private bool allowSelectOwnedObjects = false;
+		private bool allowSelectOwnedObjects = true; // why should this be disabled?
 		private bool allowInjectInOtherProcesses = true;
 		private bool isInjected = false;
 		private bool injectBasedOnRuntimeVersion = false;
-		private bool saveGeneratedAssembly = false;
-		
+		private bool saveGeneratedAssembly = false;		
 		private bool automaticExtenderMonitorAndAttach = true;
-
 		private bool advancedFeatures = true;
+        private string hotKey = "Control+Shift+R";
 
         private string appExeName = "ACorns.Hawkeye.exe";
 
-		private CoreApplicationOptions()
-		{
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CoreApplicationOptions"/> class.
+        /// </summary>
+		private CoreApplicationOptions() { }
 
-		}
-
-
+        public string HotKey
+        {
+            get { return hotKey; }
+        }
 
 		public bool AllowSelectOwnedObjects
 		{
@@ -114,15 +134,34 @@ namespace ACorns.Hawkeye.Core.Options
             set { this.appExeName = value; }
         }
 
-        public static string FolderName
+        public string FolderName
         {
             get
             {
 #if X64
-				return Path.GetDirectoryName(typeof(CoreApplicationOptions).Assembly.Location) + "..\\";
+				return Path.Combine(
+                    Path.GetDirectoryName(typeof(CoreApplicationOptions).Assembly.Location), "..");
 #else
                 return Path.GetDirectoryName(typeof(CoreApplicationOptions).Assembly.Location);
 #endif
+            }
+        }
+
+        private void ReadSettings()
+        {
+            string filename = Path.Combine(instance.FolderName, "settings.xml");
+            if (!File.Exists(filename))
+            {
+                Trace.WriteLine(string.Format("Settings file {0} could not be found; using defaults"), filename);
+                return;
+            }
+
+            XmlDocument xdoc = new XmlDocument();
+            xdoc.Load(filename);
+            foreach (XmlElement xe in xdoc.DocumentElement)
+            {
+                if (xe.Name == "hotKey")
+                    instance.hotKey = xe.Attributes["value"].Value;
             }
         }
 	}

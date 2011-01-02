@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ACorns.Hawkeye</RootNamespace>
     <AssemblyName>ACorns.Hawkeye.CoreUI</AssemblyName>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Hawkeye.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
@@ -131,11 +132,9 @@
     <Compile Include="Tabs\ProcessInfo\ReroutedPropertyDescriptor.cs" />
     <Compile Include="Tabs\ProcessInfo\SqlConnectionPoolInfo.cs" />
     <Compile Include="Tabs\Properties\AllPropertiesTab.cs" />
+    <Compile Include="Tabs\SelectedObjectRequestHandler.cs" />
     <Compile Include="Tabs\Toolbar\ToolbarUtils.cs" />
     <Compile Include="Tabs\Tree\ItemHierarchyTab.cs" />
-    <Compile Include="Tabs\XPropertyGrid.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Tools\Logging\CodeChangeLoggingSystem.cs" />
     <Compile Include="Tools\Logging\LoggingUI.cs">
       <SubType>UserControl</SubType>
@@ -178,6 +177,12 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Utils\WindowProperties.cs" />
+    <Compile Include="Tabs\XPropertyGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Tabs\XPropertyGrid.Designer.cs">
+      <DependentUpon>XPropertyGrid.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Tools.pdn" />
@@ -293,10 +298,6 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\WhiteEye.gif" />
-    <EmbeddedResource Include="Tabs\XPropertyGrid.resx">
-      <DependentUpon>XPropertyGrid.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="Tools\Logging\LoggingUI.resx">
       <DependentUpon>LoggingUI.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -320,9 +321,9 @@
     <Content Include="Resources\1-hawk.gif" />
     <Content Include="Resources\1eye.gif" />
     <Content Include="Resources\1eye.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Hawkeye.snk" />
+    <EmbeddedResource Include="Resources\RightArrow.bmp" />
+    <EmbeddedResource Include="Resources\LeftArrow.bmp" />
+    <EmbeddedResource Include="Resources\UpArrow.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ACorns.Hawkeye.Core\ACorns.Hawkeye.Core.csproj">

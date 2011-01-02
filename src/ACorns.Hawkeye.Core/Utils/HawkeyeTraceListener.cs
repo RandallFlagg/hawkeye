@@ -24,7 +24,7 @@ namespace ACorns.Hawkeye.Core.Utils
 
 		private HawkeyeTraceListener()
 		{
-            this.logFileName = CoreApplicationOptions.FolderName + this.LOG_FILE_NAME;
+            logFileName = CoreApplicationOptions.Instance.FolderName + LOG_FILE_NAME;
 			try
 			{
 				if (File.Exists(this.logFileName))

@@ -110,28 +110,11 @@ namespace ACorns.Hawkeye.Tabs.ProcessInfo
 			remappedProperties = DescriptorUtils.RemapComponent(realProperties, realComponent, realObject, name, new ChildTypeConverter());
 			return remappedProperties;
 		}
-
-
-
-
+        
 		#region ICustomMenuHandler Members
 
-		public void RegisterMenuItems(System.Windows.Forms.ContextMenu contextMenu)
-		{
-#if LICENCEDBUILD
-			changePrincipalMenuItem = new CustomMenuItem(this, "Change Principal", new EventHandler(OnChangePrincipal));
+		public void RegisterMenuItems(System.Windows.Forms.ContextMenuStrip contextMenu) { }
 
-			contextMenu.MenuItems.Add(changePrincipalMenuItem);
-
-			changePrincipalMenuItem.Enabled = LicenceUtils.HasValidLicence;
-#endif
-		}
-#if LICENCEDBUILD
-		private void OnChangePrincipal(object sender, EventArgs e)
-		{
-			SecurityUtils.ChangeThreadPrincipal
-		}
-#endif
 		#endregion
 	}
 }

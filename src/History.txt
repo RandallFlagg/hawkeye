@@ -1,5 +1,9 @@
 Version 1.2.3 
 
+* Added a setting to the app.config allowing to configure Hawkeye's hot key (empty to disable it). See http://hawkeye.codeplex.com/workitem/7480
+* Added a "Go To Parent" button to the toolbar. See http://hawkeye.codeplex.com/workitem/7156
+* Added Back/Forward buttons to the toolbar. See http://hawkeye.codeplex.com/workitem/7157
+* Removed assemblies strong naming (this prepares the next release).
 * Added the "Snapshot" feature (based on code by Sharpmao; see http://hawkeye.codeplex.com/workitem/2783)
 * Updated the About box so that it supports VS designer.
 * Modified the About box to include the history (this file) and the credits.

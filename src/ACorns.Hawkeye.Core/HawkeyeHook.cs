@@ -114,15 +114,25 @@ namespace ACorns.Hawkeye.Core
 					if (x64Process != thisIsx64)
 					{	// we're in trouble ;) We need to change the x version of Hawkeye
 						string targetCommandLine = String.Format("/targetwndhandle:{0} /origwndhandle:{1}", targetWindowHandle.ToInt32(), thisHandle.ToInt32());
-						string folder = Path.GetDirectoryName(Application.ExecutablePath);
-						string exe = "..\\" + CoreApplicationOptions.Instance.AppExeName;
-						if (x64Process)
-						{
-							exe = "x64\\" + CoreApplicationOptions.Instance.AppExeName;
-						}
-						string runExe = Path.Combine(folder, exe);
-						Process.Start(runExe, targetCommandLine);
 
+                        // BUG: when injected, Application.ExecutablePath returns the injected application path, 
+                        // not Hawkeye path!
+                        //string folder = Path.GetDirectoryName(Application.ExecutablePath); 
+                        string folder = Path.GetDirectoryName(GetType().Assembly.Location);
+
+						string exe = "..\\" + CoreApplicationOptions.Instance.AppExeName;
+						if (x64Process) exe = "x64\\" + CoreApplicationOptions.Instance.AppExeName;
+
+						string runExe = Path.Combine(folder, exe);
+                        Trace.WriteLine(string.Format("Running {0}", runExe));
+
+                        if (!File.Exists(runExe))
+                        {
+                            Trace.WriteLine(string.Format("Could not find Hawkeye executable at path {0}", runExe));
+                            return false;
+                        }
+                        
+                        Process.Start(runExe, targetCommandLine);
 						return true;
 					}
 

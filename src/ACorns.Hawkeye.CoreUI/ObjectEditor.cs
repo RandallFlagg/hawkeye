@@ -30,202 +30,182 @@ using ACorns.Hawkeye.Plugins;
 
 namespace ACorns.Hawkeye
 {
-	/// <summary>
-	/// Singleton class that takes care of showing the Runtime ObjectEditor form with it's window finder.
-	/// To use this you have to enable it:
-	/// <code>ACorns.Hawkeye.ObjectEditor.Instance.Enable();</code>
-	/// The default shortcut key used it "Control+Shift+R".
-	/// If you want to use a different shortcut, change the <see cref="ObjectEditor.HotKey"/>
-	/// </summary>
-	public sealed class ObjectEditor
-	{
-		#region Instance
+    /// <summary>
+    /// Singleton class that takes care of showing the Runtime ObjectEditor form with it's window finder.
+    /// To use this you have to enable it:
+    /// <code>ACorns.Hawkeye.ObjectEditor.Instance.Enable();</code>
+    /// The default shortcut key used it "Control+Shift+R".
+    /// If you want to use a different shortcut, change the <see cref="ObjectEditor.HotKey"/>
+    /// </summary>
+    public sealed class ObjectEditor
+    {
+        #region Instance
 
-		private static ObjectEditor instance = new ObjectEditor();
+        private static ObjectEditor instance = new ObjectEditor();
 
-		/// <summary>
-		/// Singleton instance of the ObjectEditor.
-		/// </summary>
-		public static ObjectEditor Instance
-		{
-			get { return instance; }
-		}
+        /// <summary>
+        /// Singleton instance of the ObjectEditor.
+        /// </summary>
+        public static ObjectEditor Instance
+        {
+            get { return instance; }
+        }
 
-		#endregion
+        #endregion
 
-		private bool enabled = false;
-		private string hotKey = "Control+Shift+R";
-		private HotKeyWatch hotKeyWatch = null;
-		private HawkeyeEditor hawkeyeEditor;
+        private bool hotKeyEnabled = false;
+        private HotKeyWatch hotKeyWatch = null;
+        private HawkeyeEditor hawkeyeEditor = null;
 
         private WindowMonitorExtensions windowMonitorExtensions = null;
 
-		private ObjectEditor()
-		{
-			try
-			{
-				Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
-				Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
-			}
-			catch(Exception){}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ObjectEditor"/> class.
+        /// </summary>
+        private ObjectEditor()
+        {
+            try
+            {
+                Application.ThreadException += new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+                Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
+            }
+            catch (Exception) { }
 
             HawkeyeTraceListener.StartListening();
-		}
+        }
 
-		/// <summary>
-		/// Gets or sets the default shortcut used to popup the Object Editor.
-		/// Default value is: Control+Shift+R.
-		/// You can specify any key combination like: Control+Shift+Alt+F1.
-		/// </summary>
-		public string HotKey
-		{
-			get { return hotKey; }
-			set { hotKey = value; }
-		}
+        /// <summary>
+        /// Enable the Object Editor to listen for the shortcut key.
+        /// </summary>
+        /// <returns></returns>
+        public void EnableHotKey()
+        {
+            if (hotKeyEnabled) return; // already enabled.
 
-		/// <summary>
-		/// Enable the Object Editor to listen for the shortcut key.
-		/// </summary>
-		/// <returns></returns>
-		public bool Enable()
-		{
-			if (enabled)
-				return true; // already enabled.
+            string hotKey = CoreApplicationOptions.Instance.HotKey;
+            if (string.IsNullOrEmpty(hotKey)) return;
 
-			hotKeyWatch = new HotKeyWatch();
-			if (!hotKeyWatch.RegisterHotKey(hotKey))
-				return false; // didn't work
+            hotKeyWatch = new HotKeyWatch();
+            if (!hotKeyWatch.RegisterHotKey(hotKey)) return; // didn't work
 
-			hotKeyWatch.HotKeyPressed += new EventHandler(hotKeyWatch_HotKeyPressed);
-			enabled = true;
-			Trace.WriteLine("ObjectEditor enabled on shorcut:" + hotKey);
-			return true;
-		}
+            hotKeyWatch.HotKeyPressed += new EventHandler(hotKeyWatch_HotKeyPressed);
+            hotKeyEnabled = true;
+            Trace.WriteLine("ObjectEditor's hotkey enabled: " + hotKey);
+        }
 
-		/// <summary>
-		/// Disable the object editor.
-		/// </summary>
-		public void Disable()
-		{
-			if (!enabled)
-				return;
+        ///// <summary>
+        ///// Disable the object editor.
+        ///// </summary>
+        //public void DisableHotKey()
+        //{
+        //    if (!hotKeyEnabled) return;
 
-			hotKeyWatch.HotKeyPressed -= new EventHandler(hotKeyWatch_HotKeyPressed);
-			hotKeyWatch.UnregisterKey();
-			hotKeyWatch = null;
-			enabled = false;
-			Trace.WriteLine("ObjectEditor disabled.");
-		}
+        //    hotKeyWatch.HotKeyPressed -= new EventHandler(hotKeyWatch_HotKeyPressed);
+        //    hotKeyWatch.UnregisterKey();
+        //    hotKeyWatch = null;
+        //    hotKeyEnabled = false;
+        //    Trace.WriteLine("ObjectEditor's hotkey disabled.");
+        //}
 
-		private void hotKeyWatch_HotKeyPressed(object sender, EventArgs e)
-		{
-			Show();
-		}
+        /// <summary>
+        /// Show the object editor form.
+        /// </summary>
+        public void Show()
+        {
+            object activeSelectedObject = null;
+            if (hawkeyeEditor != null)
+            {
+                activeSelectedObject = hawkeyeEditor.SelectedObject;
 
-		private void runtimeEditor_Closed(object sender, EventArgs e)
-		{
-			hawkeyeEditor = null;
-		}
+                // Disconnect any possible Open Forms
+                foreach (Form frm in Application.OpenForms)
+                {
+                    if (frm.Owner == hawkeyeEditor)
+                        frm.Owner = null;
+                }
 
-		/// <summary>
-		/// Show the object editor form.
-		/// </summary>
-		public void Show()
-		{
-			object activeSelectedObject = null;
-			if (hawkeyeEditor != null)
-			{
-				activeSelectedObject = hawkeyeEditor.SelectedObject;
+                hawkeyeEditor.Close();
+            }
 
-				// Disconnect any possible Open Forms
-				foreach (Form frm in Application.OpenForms)
-				{
-					if (frm.Owner == hawkeyeEditor)
-					{
-						frm.Owner = null;
-					}
-				}
+            hawkeyeEditor = new HawkeyeEditor();
+            hawkeyeEditor.Show();
+            hawkeyeEditor.Closed += new EventHandler(runtimeEditor_Closed);
+            hawkeyeEditor.SelectedObject = activeSelectedObject;
+            hawkeyeEditor.Activate();
+        }
 
-				hawkeyeEditor.Close();
-			}
+        ///// <summary>
+        ///// Show the editor with the selectedObject selected.
+        ///// </summary>
+        ///// <param name="selectObject">The object to be selected in the editor</param>
+        //public void Show(object selectObject)
+        //{
+        //    if (hawkeyeEditor != null) hawkeyeEditor.Close();
 
-			hawkeyeEditor = new HawkeyeEditor();
-			hawkeyeEditor.Show();
-			hawkeyeEditor.Closed += new EventHandler(runtimeEditor_Closed);
-			hawkeyeEditor.SelectedObject = activeSelectedObject;
-			hawkeyeEditor.Activate();
-		}
+        //    hawkeyeEditor = new HawkeyeEditor();
+        //    hawkeyeEditor.Show();
+        //    hawkeyeEditor.Closed += new EventHandler(runtimeEditor_Closed);
+        //    hawkeyeEditor.SelectedObject = selectObject;
+        //}
 
-		/// <summary>
-		/// Show the editor with the selectedObject selected.
-		/// </summary>
-		/// <param name="selectObject">The object to be selected in the editor</param>
-		public void Show(object selectObject)
-		{
-			if (hawkeyeEditor != null)
-			{
-				hawkeyeEditor.Close();
-			}
+        internal HawkeyeEditor ActiveEditor
+        {
+            get { return this.hawkeyeEditor; }
+            set { this.hawkeyeEditor = value; }
+        }
 
-			hawkeyeEditor = new HawkeyeEditor();
-			hawkeyeEditor.Show();
-			hawkeyeEditor.Closed += new EventHandler(runtimeEditor_Closed);
-			hawkeyeEditor.SelectedObject = selectObject;
-		}
+        //public object SelectedObject
+        //{
+        //    get { return hawkeyeEditor.SelectedObject; }
+        //    set { hawkeyeEditor.SelectedObject = value; }
+        //}
 
-		internal HawkeyeEditor ActiveEditor
-		{
-			get { return this.hawkeyeEditor; }
-			set { this.hawkeyeEditor = value; }
-		}
+        public Form CreateEditor()
+        {
+            if (hawkeyeEditor != null) hawkeyeEditor.Close();
 
-		public object SelectedObject
-		{
-			get { return hawkeyeEditor.SelectedObject; }
-			set { hawkeyeEditor.SelectedObject = value; }
-		}
+            hawkeyeEditor = new HawkeyeEditor();
+            return hawkeyeEditor;
+        }
 
-		public Form CreateEditor()
-		{
-			if (hawkeyeEditor != null)
-			{
-				hawkeyeEditor.Close();
-			}
-			hawkeyeEditor = new HawkeyeEditor();
-			return hawkeyeEditor;
-		}
 
-		private void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
-		{
-			Trace.WriteLine("Application_ThreadException:" + e.Exception.ToString(), "Hawkeye");
-			if ( e.Exception is NullReferenceException )
-			{
-				if ( hawkeyeEditor != null && hawkeyeEditor.Disposing )
-					return;
-			}
-			MessageBox.Show("There was an unhandled exception:" + e.Exception.ToString(), SystemUtils.ApplicationName);
-		}
-
-		private void Application_ApplicationExit(object sender, EventArgs e)
-		{
-			Trace.WriteLine("Exiting:" + SystemUtils.ApplicationName, "Hawkeye");
-		}
-
-		public void EnableDynamicExtenders()
-		{
-			// Start Message Monitor
+        public void EnableDynamicExtenders()
+        {
+            // Start Message Monitor
             CoreApplicationOptions.Instance.AutomaticExtenderMonitorAndAttach = true;
             CoreApplicationOptions.Instance.AllowInjectInOtherProcesses = false;
             CoreApplicationOptions.Instance.AllowSelectOwnedObjects = false;
             CoreApplicationOptions.Instance.SaveGeneratedAssembly = false;
 
             windowMonitorExtensions = new WindowMonitorExtensions();
-		}
+        }
 
-		public void AttachTo(IntPtr windowHandle, IntPtr origHandle)
-		{
-			EditorHawkeyeHook hook = new EditorHawkeyeHook();
-			hook.Hook(windowHandle, origHandle);
-		}
-	}
+        public void AttachTo(IntPtr windowHandle, IntPtr origHandle)
+        {
+            EditorHawkeyeHook hook = new EditorHawkeyeHook();
+            hook.Hook(windowHandle, origHandle);
+        }
+
+        private void hotKeyWatch_HotKeyPressed(object sender, EventArgs e) { Show(); }
+
+        private void runtimeEditor_Closed(object sender, EventArgs e) { hawkeyeEditor = null; }
+
+        private void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+        {
+            Trace.WriteLine("Application_ThreadException:" + e.Exception.ToString(), "Hawkeye");
+            if (e.Exception is NullReferenceException)
+            {
+                if (hawkeyeEditor != null && hawkeyeEditor.Disposing)
+                    return;
+            }
+
+            MessageBox.Show("There was an unhandled exception:" + e.Exception.ToString(), 
+                SystemUtils.ApplicationName);
+        }
+
+        private void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            Trace.WriteLine("Exiting:" + SystemUtils.ApplicationName, "Hawkeye");
+        }
+    }
 }

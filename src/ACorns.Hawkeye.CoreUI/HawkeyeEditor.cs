@@ -55,6 +55,9 @@ namespace ACorns.Hawkeye
             set { windowFinder.SelectedHandle = value; }
         }
 
+        /// <summary>
+        /// Raises the CreateControl event.
+        /// </summary>
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
@@ -63,8 +66,6 @@ namespace ACorns.Hawkeye
             extenderCreated = TryCreateExtender(GetType());
             if (!extenderCreated)
                 extenderCreated = TryCreateExtender(typeof(IHawkeyeEditor));
-
-
         }
 
         /// <summary>

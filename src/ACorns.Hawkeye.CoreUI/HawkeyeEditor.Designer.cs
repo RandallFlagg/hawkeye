@@ -70,16 +70,32 @@ namespace ACorns.Hawkeye
             // 
             // imageList
             // 
-            this.imageList.ColorDepth = System.Windows.Forms.ColorDepth.Depth24Bit;
-            this.imageList.ImageSize = new System.Drawing.Size(16, 16);
             this.imageList.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList.ImageStream")));
             this.imageList.TransparentColor = System.Drawing.Color.Silver;
             this.imageList.Images.SetKeyName(0, "");
-            this.imageList.Images.SetKeyName(1, "");
-            this.imageList.Images.SetKeyName(2, "");
-            this.imageList.Images.SetKeyName(3, "");
+            this.imageList.Images.SetKeyName(1, "LeftArrow.bmp");
+            this.imageList.Images.SetKeyName(2, "RightArrow.bmp");
+            this.imageList.Images.SetKeyName(3, "UpArrow.bmp");
             this.imageList.Images.SetKeyName(4, "");
             this.imageList.Images.SetKeyName(5, "");
+            this.imageList.Images.SetKeyName(6, "");
+            this.imageList.Images.SetKeyName(7, "");
+            this.imageList.Images.SetKeyName(8, "");
+            this.imageList.Images.SetKeyName(9, "");
+            this.imageList.Images.SetKeyName(10, "");
+            this.imageList.Images.SetKeyName(11, "");
+            this.imageList.Images.SetKeyName(12, "");
+            this.imageList.Images.SetKeyName(13, "");
+            this.imageList.Images.SetKeyName(14, "");
+            this.imageList.Images.SetKeyName(15, "");
+            this.imageList.Images.SetKeyName(16, "");
+            this.imageList.Images.SetKeyName(17, "");
+            this.imageList.Images.SetKeyName(18, "");
+            this.imageList.Images.SetKeyName(19, "");
+            this.imageList.Images.SetKeyName(20, "");
+            this.imageList.Images.SetKeyName(21, "");
+            this.imageList.Images.SetKeyName(22, "");
+            this.imageList.Images.SetKeyName(23, "");
             // 
             // windowFinder
             // 

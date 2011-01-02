@@ -74,7 +74,7 @@
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				TargetMachine="1"
-				KeyFile="Injector.snk"
+				KeyFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -147,13 +147,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\$(ProjectName)x64.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
 				ModuleDefinitionFile="Injector.def"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				TargetMachine="17"
-				KeyFile="Injector.snk"
+				KeyFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -229,7 +229,7 @@
 				ModuleDefinitionFile="Injector.def"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
-				KeyFile="Injector.snk"
+				KeyFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -301,12 +301,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\$(ProjectName)x64.dll"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				ModuleDefinitionFile="Injector.def"
 				GenerateDebugInformation="true"
 				TargetMachine="17"
-				KeyFile="Injector.snk"
+				KeyFile=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -443,10 +443,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\Injector.snk"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

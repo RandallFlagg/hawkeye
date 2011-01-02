@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ACorns.Hawkeye.Core</RootNamespace>
     <AssemblyName>ACorns.Hawkeye.Core</AssemblyName>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Hawkeye.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
@@ -62,6 +63,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.XML" />
@@ -75,9 +77,9 @@
     <Compile Include="Options\CoreApplicationOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="HawkeyeHook.cs" />
-    <Compile Include="Accessors\FieldAccesor.cs" />
-    <Compile Include="Accessors\MethodAccesor.cs" />
-    <Compile Include="Accessors\PropertyAccesor.cs" />
+    <Compile Include="Utils\Accessors\FieldAccesor.cs" />
+    <Compile Include="Utils\Accessors\MethodAccesor.cs" />
+    <Compile Include="Utils\Accessors\PropertyAccesor.cs" />
     <Compile Include="Utils\Arguments.cs" />
     <Compile Include="Generate\EventActionEnum.cs" />
     <Compile Include="Utils\EventHandlerTypeVisitors.cs" />
@@ -104,9 +106,6 @@
       <DependentUpon>HotKeyWatch.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Hawkeye.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ACorns.Hawkeye.Injector\ACorns.Hawkeye.Injector.vcproj">

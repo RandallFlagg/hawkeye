@@ -74,7 +74,7 @@ namespace ACorns.Hawkeye.Options
 
                 if (type == null)
                 {
-                    string fullName = Path.Combine(CoreApplicationOptions.FolderName, assemblyName) + ".dll";
+                    string fullName = Path.Combine(CoreApplicationOptions.Instance.FolderName, assemblyName) + ".dll";
                     Assembly.LoadFrom(fullName);
 
                     ObjectHandle handle = Activator.CreateInstance(assemblyName, className);
