@@ -119,12 +119,17 @@ namespace Reflector
             StringBuilder titleBuilder = new StringBuilder(256);
             GetWindowText(handle, titleBuilder, 256);
 
-            if (titleBuilder.ToString().StartsWith("Lutz Roeder's .NET Reflector"))
-                targetWindow = handle;
+            //TODO: when multiple Reflector windows are found, allow the user to choose which one to use.
 
-            if (titleBuilder.ToString().StartsWith("Red Gate's .NET Reflector"))
+            // FIX: issue http://hawkeye.codeplex.com/workitem/7784
+            // Reflector 7 (beta) title starts with ".NET Reflector"
+            if (titleBuilder.ToString().StartsWith(".NET Reflector"))
                 targetWindow = handle;
-
+            else if (titleBuilder.ToString().StartsWith("Red Gate's .NET Reflector"))
+                targetWindow = handle;
+            else if (titleBuilder.ToString().StartsWith("Lutz Roeder's .NET Reflector"))
+                targetWindow = handle;
+            
             return true;
         }	
 	}

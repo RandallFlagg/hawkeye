@@ -17,15 +17,17 @@ namespace Hawkeye.DemoProject
             if (DesignMode) return;
 
 #if X64
-            theLabel.TheText = "I am an x64 Test application";
+            theLabel.TheText = "I am an x64 Test application - " + theLabel.Handle;
 #elif X86
-            theLabel.TheText = "I am an x86 Test application";
+            theLabel.TheText = "I am an x86 Test application - " + theLabel.Handle;
 #else
-            theLabel.TheText = "I am an 'Any CPU' Test application";
+            theLabel.TheText = "I am an 'Any CPU' Test application - " + theLabel.Handle;
 #endif
             exitButton.Click += delegate { Close(); };
-
-            base.Text = string.Format("Test: {0} bits", 8 * Marshal.SizeOf(typeof(IntPtr)));
+            exitButton.Text += " " + exitButton.Handle;
+            base.Text = string.Format("Test: {0} bits; HWND={1}", 
+                8 * Marshal.SizeOf(typeof(IntPtr)),
+                Handle);
 
         }
     }
