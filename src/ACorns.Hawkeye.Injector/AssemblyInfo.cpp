@@ -11,4 +11,4 @@ using namespace System::Runtime::CompilerServices;
 [assembly:AssemblyCopyrightAttribute("(c)2005 ACorns (www.acorns.com.au)")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];		
-[assembly:AssemblyVersionAttribute("1.2.3.0")];
+[assembly:AssemblyVersionAttribute("1.2.4.0")];
