@@ -1,3 +1,7 @@
+Version 1.2.5
+=============
+* Olivier Dalet (http://odalet.wordpress.com/)
+
 Version 1.2.4
 =============
 * Olivier Dalet (http://odalet.wordpress.com/)
