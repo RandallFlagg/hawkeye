@@ -161,6 +161,14 @@ namespace ACorns.Hawkeye.Core.Utils
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
 
+        // FIX: http://hawkeye.codeplex.com/workitem/7791
+        [DllImport("kernel32.dll")]
+        public static extern int GetSystemWow64Directory(
+            [In, Out] StringBuilder lpBuffer, [MarshalAs(UnmanagedType.U4)] uint size);
+
+        private static bool wow64DirectoryChecked = false;
+        private static bool wow64DirectoryExists = false;
+
         public static string GetWindowText(IntPtr hwnd)
         {
             int bufLen = GetWindowTextLength(hwnd) + 1;
@@ -224,9 +232,43 @@ namespace ACorns.Hawkeye.Core.Utils
             }
         }
 
-        //TODO: this always return true on x86 machines!
+        // FIX: http://hawkeye.codeplex.com/workitem/7791
+        private static bool IsWindowsX64
+        {
+            get
+            {
+                try
+                {
+                    if (!wow64DirectoryChecked)
+                    {
+                        StringBuilder builder = new StringBuilder(256);
+                        int result = GetSystemWow64Directory(builder, (uint)256);
+                        wow64DirectoryChecked = true;
+                        wow64DirectoryExists = result != 0; 
+                    }
+                    
+                    // we have a Wow64 path ==> we run an x64 OS
+                    return wow64DirectoryExists;
+                }
+                catch (Exception ex)
+                {
+                    // For debugging purpose
+                    Exception debugException = ex;
+
+                    // Well if GetSystemWow64Directory failed, let's suppose we 
+                    // are running an x86 box; anyway other parts of the code may
+                    // throw as well...
+                    return false; 
+                }
+            }
+        }
+
         public static bool IsProcessX64(IntPtr processId)
         {
+            // FIX: http://hawkeye.codeplex.com/workitem/7791
+            // First determine whether we are running an x86 or x64 OS
+            if (!IsWindowsX64) return false;
+
             if (IsWow64Process == null) return false;
 
             int procId = processId.ToInt32();
