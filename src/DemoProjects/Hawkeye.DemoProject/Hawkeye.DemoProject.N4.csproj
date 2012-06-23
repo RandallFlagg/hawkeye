@@ -133,7 +133,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <None Include="app.config" />
-    <None Include="Migrated rules for Hawkeye.DemoProject.N4.ruleset" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
